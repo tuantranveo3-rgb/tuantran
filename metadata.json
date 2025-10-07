@@ -1,0 +1,5 @@
+{
+  "name": "PDF ➜ Excel PO Parser",
+  "description": "An application in Vietnamese that allows users to upload a Purchase Order (PO) PDF, automatically extracts tabular data into five columns (PO, SKU, Description, Quantity, Total), displays it in an editable table, and allows exporting the data to an Excel (.xlsx) file.",
+  "requestFramePermissions": []
+}
