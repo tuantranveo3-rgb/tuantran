@@ -2,11 +2,20 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { PoItem } from '../types';
 
-if (!process.env.API_KEY) {
-    throw new Error("API_KEY environment variable not set");
-}
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Lazily initialize to avoid crashing on module load if API_KEY is missing.
+let ai: GoogleGenAI | null = null;
+
+function getAiClient(): GoogleGenAI {
+    if (ai) return ai;
+
+    if (!process.env.API_KEY) {
+        throw new Error("API_KEY environment variable not set. Please configure your API Key for Gemini.");
+    }
+    
+    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    return ai;
+}
 
 const schema = {
   type: Type.ARRAY,
@@ -40,6 +49,7 @@ const schema = {
 
 export const parsePdfPo = async (base64Pdf: string): Promise<Omit<PoItem, 'id'>[]> => {
   try {
+    const client = getAiClient();
     const prompt = `Phân tích tệp PDF được cung cấp. Tìm bảng chứa các mặt hàng trong đơn đặt hàng. Trích xuất dữ liệu và trả về một mảng JSON. Mỗi đối tượng trong mảng phải có các khóa sau: 'po', 'sku', 'description', 'quantity', và 'total'. Đảm bảo rằng 'quantity' và 'total' là số. Nếu không tìm thấy bảng, hãy trả về một mảng trống.`;
     
     const filePart = {
@@ -53,7 +63,7 @@ export const parsePdfPo = async (base64Pdf: string): Promise<Omit<PoItem, 'id'>[
       text: prompt,
     };
 
-    const response = await ai.models.generateContent({
+    const response = await client.models.generateContent({
       model: "gemini-2.5-flash",
       contents: { parts: [textPart, filePart] },
       config: {
@@ -73,6 +83,7 @@ export const parsePdfPo = async (base64Pdf: string): Promise<Omit<PoItem, 'id'>[
 
   } catch (error) {
     console.error("Error parsing PDF with Gemini API:", error);
-    throw new Error("Failed to process the PDF file with the AI model.");
+    // Re-throw so the UI can catch it and display a proper message
+    throw error;
   }
 };

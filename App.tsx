@@ -39,7 +39,11 @@ export default function App() {
       }
     } catch (err) {
       console.error(err);
-      setError('Đã xảy ra lỗi khi phân tích tệp PDF. Vui lòng kiểm tra lại tệp hoặc thử lại sau.');
+      if (err instanceof Error && err.message.includes("API_KEY")) {
+         setError('Lỗi cấu hình: API Key cho Gemini chưa được thiết lập. Vui lòng đảm bảo rằng bạn đã cấu hình biến môi trường API_KEY trong môi trường triển khai của mình.');
+      } else {
+        setError('Đã xảy ra lỗi khi phân tích tệp PDF. Vui lòng kiểm tra lại tệp hoặc thử lại sau.');
+      }
       setAppState(AppState.Error);
     }
   }, []);
